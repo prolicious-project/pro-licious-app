@@ -225,8 +225,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   logo: {
-    width: 100,
-    height: 100,
+    width: 190,
+    height: 190,
   },
 
   // Form Container
