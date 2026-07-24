@@ -12,8 +12,6 @@ import {
   Platform,
   Image,
   ImageStyle,
-  Alert,
-  Dimensions,
 } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { setCredentials } from '../store/slices/authSlice';
@@ -23,8 +21,6 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { Colors, Spacing, Radius } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
-
-const { width } = Dimensions.get('window');
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 

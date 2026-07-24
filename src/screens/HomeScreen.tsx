@@ -59,7 +59,7 @@ export default function HomeScreen({ navigation }: any) {
       if (vendorsRes.data?.data) setVendors(vendorsRes.data.data);
       if (catsRes.data?.data) setCategories(catsRes.data.data);
     } catch (err) {
-      console.warn('Could not fetch data:', err);
+      // Silently handle data fetch errors
     } finally {
       setLoading(false);
     }
@@ -81,7 +81,6 @@ export default function HomeScreen({ navigation }: any) {
       const res = await customerApi.search(searchQuery);
       setSearchResults(res.data?.data || []);
     } catch (e) {
-      console.warn('Search error:', e);
       setSearchResults([]);
     } finally {
       setSearchLoading(false);
@@ -102,7 +101,7 @@ export default function HomeScreen({ navigation }: any) {
         setFavorites((prev) => new Set(prev).add(vendorId));
       }
     } catch (e) {
-      console.warn('Favorite toggle error:', e);
+      // Silently handle favorite toggle errors
     }
   };
 
@@ -358,7 +357,7 @@ export default function HomeScreen({ navigation }: any) {
 
         {/* TRUST BADGES */}
         <View style={styles.trustSection}>
-          <Text style={styles.trustSectionTitle}>Why Choose meatinminutes?</Text>
+          <Text style={styles.trustSectionTitle}>Why Choose MeatInMinutes?</Text>
           <View style={styles.trustGrid}>
             <View style={styles.trustCard}>
               <View style={styles.trustIconContainer}>
@@ -416,18 +415,19 @@ const styles = StyleSheet.create({
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
   },
   logoBadge: {
     backgroundColor: 'transparent',
-    width: 140,
-    height: 30,
+    width: 120,
+    height: 40,
     marginRight: 6,
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoImage: {
-    width: 140,
-    height: 30,
+    width: 120,
+    height: 40,
   },
   logoTitle: {
     fontWeight: '900',

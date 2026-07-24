@@ -9,12 +9,13 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { logout } from '../../store/slices/authSlice';
 import { RootState } from '../../store/store';
 import { api } from '../../lib/axios';
 import { Colors, Spacing, Radius, Shadow } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { useNavigation } from '@react-navigation/native';
+import { handleLogoutImmediate } from '../../utils/auth';
 
 export default function VendorDashboardScreen({ navigation }: any) {
   const dispatch = useDispatch();
@@ -57,11 +58,7 @@ export default function VendorDashboardScreen({ navigation }: any) {
   };
 
   const handleSignOut = () => {
-    dispatch(logout());
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Login' }],
-    });
+    handleLogoutImmediate(dispatch, navigation);
   };
 
   if (loading) {

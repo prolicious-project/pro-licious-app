@@ -12,12 +12,12 @@ import {
 } from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
-import { logout } from '../store/slices/authSlice';
 import { RootState } from '../store/store';
 import { api } from '../lib/axios';
 import { Colors, Spacing, Radius, Shadow } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { handleLogoutWithConfirm } from '../utils/auth';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -125,20 +125,7 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: () => {
-          dispatch(logout());
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'Login' }],
-          });
-        },
-      },
-    ]);
+    handleLogoutWithConfirm(dispatch, navigation);
   };
 
   if (loading) {
@@ -352,7 +339,7 @@ const styles = StyleSheet.create({
   },
   profileRole: {
     fontSize: 11,
-    color: Colors.amber,
+    color: Colors.gray500,
     fontWeight: '700',
     textTransform: 'uppercase',
     marginTop: 2,
@@ -428,7 +415,7 @@ const styles = StyleSheet.create({
   },
   cancelBtnText: {
     fontSize: 12,
-    fontWeight: '750',
+    fontWeight: '700',
     color: Colors.gray500,
   },
   saveBtn: {
@@ -441,7 +428,7 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     fontSize: 12,
-    fontWeight: '750',
+    fontWeight: '700',
     color: '#fff',
   },
   detailsList: {
@@ -541,7 +528,7 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '800',
     color: Colors.gray700,
-    backgroundColor: Colors.gray150 || '#f3f4f6',
+    backgroundColor: Colors.gray100,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,

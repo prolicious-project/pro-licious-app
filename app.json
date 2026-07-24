@@ -1,17 +1,12 @@
 {
   "expo": {
-    "name": "meatinminutes",
+    "name": "MeatInMinutes",
     "slug": "pro-licious-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "runtimeVersion": "1.0.0",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#09090b"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -28,9 +23,6 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "cli": {
-      "appVersionSource": "local"
     },
     "extra": {
       "apiUrl": "https://pro-licious-be.vercel.app",

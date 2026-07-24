@@ -6,17 +6,14 @@ export const Colors = {
   bg: '#f9fafb',         // gray-50
   bgDark: '#09090b',     // zinc-950
   bgCard: '#ffffff',
-  bgCardDark: '#18181b', // zinc-900
 
   // Borders
   border: '#f3f4f6',     // gray-100
-  borderDark: '#27272a', // zinc-800
   borderMid: '#e5e7eb',  // gray-200
 
   // Text
   textPrimary: '#111827',   // gray-900
   textSecondary: '#6b7280', // gray-500
-  textMuted: '#9ca3af',     // gray-400
   textWhite: '#ffffff',
   textDark: '#09090b',      // zinc-950
 
@@ -28,17 +25,10 @@ export const Colors = {
 
   // Success
   green: '#10b981',      // emerald-500
-  greenLight: '#d1fae5', // emerald-100
   greenBg: '#f0fdf4',    // green-50
   greenText: '#065f46',  // emerald-800
 
-  // Warning
-  amber: '#f59e0b',
-  amberBg: '#fffbeb',
-
   // Zinc (dark UI)
-  zinc800: '#27272a',
-  zinc700: '#3f3f46',
   zinc600: '#52525b',
   zinc400: '#a1a1aa',
   zinc300: '#d4d4d8',
