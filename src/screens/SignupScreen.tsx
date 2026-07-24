@@ -12,6 +12,7 @@ import {
   Platform,
   Image,
   Alert,
+  ImageStyle,
 } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { setCredentials } from '../store/slices/authSlice';
@@ -102,11 +103,15 @@ export default function SignupScreen({ navigation }: Props) {
             <View style={styles.overlay} />
             <View style={styles.logoRow}>
               <View style={styles.logoIcon}>
-                <Text style={styles.logoIconText}>P</Text>
+                <Image
+                  source={require('../../assets/icon.png')}
+                  style={styles.logoImage as ImageStyle}
+                  resizeMode="contain"
+                />
               </View>
-              <Text style={styles.logoText}>PRO<Text style={{ color: Colors.red }}>LICIOUS</Text></Text>
+              <Text style={styles.logoText}>meatinminutes</Text>
             </View>
-            <Text style={styles.bannerTitle}>Join Pro-Licious Today</Text>
+            <Text style={styles.bannerTitle}>Join meatinminutes Today</Text>
             <Text style={styles.bannerSub}>Get traceably fresh gourmet cuts delivered fast.</Text>
           </View>
 
@@ -241,11 +246,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: Spacing.sm,
+    overflow: 'hidden',
   },
-  logoIconText: {
-    color: '#fff',
-    fontWeight: '900',
-    fontSize: 16,
+  logoImage: {
+    width: 28,
+    height: 28,
   },
   logoText: {
     color: '#fff',

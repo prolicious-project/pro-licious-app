@@ -1,6 +1,6 @@
-﻿# Pro-Licious Mobile App
+﻿# MeatInMinutes Mobile App
 
-> A full-featured React Native (Expo) mobile app — a 100% functional equivalent of the [Pro-Licious](https://pro-licious-fe.vercel.app) web platform for ordering fresh meat, poultry, and seafood directly from local vendors.
+> A full-featured React Native (Expo) mobile app — a 100% functional equivalent of the MeatInMinutes web platform for ordering fresh meat, poultry, and seafood directly from local vendors.
 
 ## Table of Contents
 
@@ -20,7 +20,7 @@
 
 ## Overview
 
-Pro-Licious Mobile is a React Native Expo app that mirrors the full Pro-Licious web application. It supports four user roles - **Customer**, **Vendor**, **Rider**, and **Admin** - each with their own dedicated navigation stack and set of screens.
+MeatInMinutes Mobile is a React Native Expo app that mirrors the full MeatInMinutes web application. It supports four user roles - **Customer**, **Vendor**, **Rider**, and **Admin** - each with their own dedicated navigation stack and set of screens.
 
 **Backend:** Shared with the web app - https://pro-licious-be.vercel.app
 
@@ -64,7 +64,7 @@ App.tsx (Entry Point)
 ## Project Structure
 
 `
-pro-licious-app/
+meatinminutes-app/
 ├── App.tsx                     # Root entry: Redux Provider + Fonts + RootNavigator
 ├── app.json                    # Expo config (name, icons, splash, bundle IDs)
 ├── babel.config.js             # Babel with babel-preset-expo
@@ -242,7 +242,7 @@ npm install --legacy-peer-deps
 **Windows MAX_PATH workaround** (if you see ENOENT tar errors):
 `ash
 # Run once in an admin terminal:
-cmd /c "mklink /J C:\pla C:\Users\ADMIN\pro-licious-app"
+cmd /c "mklink /J C:\pla C:\Users\ADMIN\meatinminutes-app"
 cd C:\pla
 npm install --legacy-peer-deps
 `
@@ -277,8 +277,8 @@ eas build --platform android   # or ios
 `
 
 Bundle IDs (from app.json):
-- iOS: com.prolicious.app
-- Android: com.prolicious.app
+- iOS: com.meatinminutes.app
+- Android: com.meatinminutes.app
 
 ## Known Limitations & Differences from Web
 
@@ -296,7 +296,7 @@ Bundle IDs (from app.json):
 ### Cannot find module 'metro-transform-plugins'
 npm install failed mid-way due to Windows path limits. Fix:
 `ash
-cmd /c "mklink /J C:\pla C:\Users\ADMIN\pro-licious-app"
+cmd /c "mklink /J C:\pla C:\Users\ADMIN\meatinminutes-app"
 cd C:\pla
 Remove-Item -Recurse -Force node_modules
 npm install --legacy-peer-deps
@@ -316,7 +316,7 @@ Run terminal as Administrator, or enable Windows Developer Mode.
 
 ---
 
-Built by the Pro-Licious team.
+- Built by the MeatInMinutes team.
 
 
 

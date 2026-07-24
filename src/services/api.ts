@@ -1,5 +1,5 @@
 // src/services/api.ts
-// Exact same API endpoints as the web app (pro-licious-fe/services/api.ts)
+// Exact same API endpoints as the web app (meatinminutes-fe/services/api.ts)
 import { api } from '../lib/axios';
 
 // ============================================================

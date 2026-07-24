@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Pro-Licious",
-    "slug": "pro-licious-app",
+    "name": "meatinminutes",
+    "slug": "meatinminutes-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,14 +16,14 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.prolicious.app"
+      "bundleIdentifier": "com.meatinminutes.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#09090b"
       },
-      "package": "com.prolicious.app"
+      "package": "com.meatinminutes.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"

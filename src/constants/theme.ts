@@ -1,5 +1,5 @@
 // src/constants/theme.ts
-// Pro-Licious Design System — mirrors web Tailwind token values
+// MeatInMinutes Design System — mirrors web Tailwind token values
 
 export const Colors = {
   // Backgrounds

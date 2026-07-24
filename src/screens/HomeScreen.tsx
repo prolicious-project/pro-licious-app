@@ -12,6 +12,7 @@ import {
   Dimensions,
   SafeAreaView,
   StatusBar,
+  ImageStyle,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Colors, Spacing, Radius, Shadow } from '../constants/theme';
@@ -113,9 +114,13 @@ export default function HomeScreen({ navigation }: any) {
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <View style={styles.logoBadge}>
-            <Text style={styles.logoBadgeText}>P</Text>
+            <Image
+              source={require('../../assets/icon.png')}
+              style={styles.logoImage as ImageStyle}
+              resizeMode="contain"
+            />
           </View>
-          <Text style={styles.logoTitle}>PRO-LICIOUS</Text>
+          <Text style={styles.logoTitle}>meatinminutes</Text>
         </View>
         <TouchableOpacity
           style={styles.headerCartBtn}
@@ -130,7 +135,7 @@ export default function HomeScreen({ navigation }: any) {
         <View style={styles.hero}>
           <Image
             source={{ uri: 'https://images.unsplash.com/photo-1603048297172-c92544798d5e?q=80&w=2000&auto=format&fit=crop' }}
-            style={styles.heroBg}
+            style={styles.heroBg as ImageStyle}
           />
           <View style={styles.heroOverlay} />
 
@@ -201,7 +206,7 @@ export default function HomeScreen({ navigation }: any) {
                   >
                     <Image
                       source={{ uri: VENDOR_IMGS[index % VENDOR_IMGS.length] }}
-                      style={styles.vendorImg}
+                      style={styles.vendorImg as ImageStyle}
                     />
                     <View style={styles.vendorCardInfo}>
                       <Text style={styles.vendorName} numberOfLines={1}>
@@ -271,7 +276,7 @@ export default function HomeScreen({ navigation }: any) {
                       <View style={styles.categoryImgContainer}>
                         <Image
                           source={{ uri: cat.imageUrl || CATEGORY_IMGS[idx % CATEGORY_IMGS.length] }}
-                          style={styles.categoryImg}
+                          style={styles.categoryImg as ImageStyle}
                         />
                       </View>
                       <Text style={styles.categoryNameText}>{cat.name}</Text>
@@ -304,7 +309,7 @@ export default function HomeScreen({ navigation }: any) {
                     <View style={styles.vendorImgWrapper}>
                       <Image
                         source={{ uri: vendor.logoUrl || VENDOR_IMGS[idx % VENDOR_IMGS.length] }}
-                        style={styles.vendorImgFull}
+                        style={styles.vendorImgFull as ImageStyle}
                       />
                       <View style={styles.timeTag}>
                         <Ionicons name="time" size={10} color={Colors.red} />
@@ -354,7 +359,7 @@ export default function HomeScreen({ navigation }: any) {
 
         {/* TRUST BADGES */}
         <View style={styles.trustSection}>
-          <Text style={styles.trustSectionTitle}>Why Choose Pro-Licious?</Text>
+          <Text style={styles.trustSectionTitle}>Why Choose meatinminutes?</Text>
           <View style={styles.trustGrid}>
             <View style={styles.trustCard}>
               <View style={styles.trustIconContainer}>
@@ -415,18 +420,20 @@ const styles = StyleSheet.create({
   },
   logoBadge: {
     backgroundColor: Colors.red,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    width: 34,
+    height: 34,
     borderRadius: Radius.sm,
     marginRight: 6,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  logoBadgeText: {
-    color: '#fff',
-    fontWeight: '900',
-    fontSize: 14,
+  logoImage: {
+    width: 34,
+    height: 34,
   },
   logoTitle: {
-    fontWeight: '950',
+    fontWeight: '900',
     fontSize: 16,
     letterSpacing: -0.5,
     color: Colors.textPrimary,
@@ -468,7 +475,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: Colors.redLight,
-    fontWeight: '850',
+    fontWeight: '800',
     fontSize: 9,
   },
   heroTitle: {

@@ -67,7 +67,7 @@ export default function OrdersScreen() {
           </View>
           <Text style={styles.emptyTitle}>No orders placed yet</Text>
           <Text style={styles.emptySub}>
-            You haven't placed any orders with Pro-Licious yet. Explore fresh meat options now!
+            You haven't placed any orders with MeatInMinutes yet. Explore fresh meat options now!
           </Text>
           <TouchableOpacity
             style={styles.exploreBtn}
