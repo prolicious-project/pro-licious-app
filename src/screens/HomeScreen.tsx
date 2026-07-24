@@ -120,7 +120,6 @@ export default function HomeScreen({ navigation }: any) {
               resizeMode="contain"
             />
           </View>
-          <Text style={styles.logoTitle}>meatinminutes</Text>
         </View>
         <TouchableOpacity
           style={styles.headerCartBtn}
@@ -419,18 +418,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoBadge: {
-    backgroundColor: Colors.red,
-    width: 34,
-    height: 34,
-    borderRadius: Radius.sm,
+    backgroundColor: 'transparent',
+    width: 140,
+    height: 30,
     marginRight: 6,
-    overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoImage: {
-    width: 34,
-    height: 34,
+    width: 140,
+    height: 30,
   },
   logoTitle: {
     fontWeight: '900',

@@ -267,6 +267,15 @@ npx expo start --web
 
 Scan the QR code with Expo Go on your phone.
 
+## Demo Credentials
+
+These login credentials are intended for local/demo testing and are documented here only:
+
+- Customer: `john@example.com` / `password123`
+- Vendor: `vendor@example.com` / `password123`
+- Rider: `rider@example.com` / `password123`
+- Admin: `admin@example.com` / `password123`
+
 ## Building for Production (EAS)
 
 `ash
