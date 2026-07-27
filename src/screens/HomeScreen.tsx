@@ -414,12 +414,12 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flex: 1,
   },
   logoBadge: {
     backgroundColor: 'transparent',
-    width: 120,
+    width: 50,
     height: 40,
     marginRight: 6,
     justifyContent: 'center',
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
   },
   logoImage: {
     width: 120,
-    height: 40,
+    height: 85,
   },
   logoTitle: {
     fontWeight: '900',
@@ -436,8 +436,11 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   headerCartBtn: {
-    padding: 4,
-  },
+  width: 40,
+  height: 40,
+  justifyContent: 'center',
+  alignItems: 'center',
+},
   scrollContent: {
     paddingBottom: Spacing['3xl'],
   },
