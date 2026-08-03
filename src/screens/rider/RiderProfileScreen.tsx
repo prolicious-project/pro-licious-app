@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   },
   riderRole: {
     fontSize: 10,
-    fontWeight: '750',
+    fontWeight: '700',
     color: Colors.zinc400,
     textTransform: 'uppercase',
     marginTop: 2,

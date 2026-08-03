@@ -13,7 +13,7 @@ import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store/store';
 import { api } from '../lib/axios';
-import { setCart } from '../store/slices/cartSlice';
+import { setCart, updateQuantity, removeItem, clearCart } from '../store/slices/cartSlice';
 import { Colors, Spacing, Radius, Shadow } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -22,7 +22,7 @@ export default function CartScreen() {
   const navigation = useNavigation<any>();
   const dispatch = useDispatch();
   const isFocused = useIsFocused();
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, isGuest } = useSelector((state: RootState) => state.auth);
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const vendorId = useSelector((state: RootState) => state.cart.vendorId);
   const [loading, setLoading] = useState(true);
@@ -54,20 +54,26 @@ export default function CartScreen() {
 
   useEffect(() => {
     if (isFocused) {
-      if (!isAuthenticated) {
-        navigation.navigate('Login');
-        return;
+      if (isAuthenticated) {
+        // Sync cart from server for logged-in users
+        fetchCart();
+      } else {
+        // Guests see local cart state (from Redux) — no server sync needed
+        setLoading(false);
       }
-      fetchCart();
     }
-  }, [isAuthenticated, isFocused]);
+  }, [isAuthenticated, isGuest, isFocused]);
 
-  const handleUpdateQty = async (cartItemId: number, newQty: number) => {
+  const handleUpdateQty = async (itemId: number, newQty: number) => {
+    if (!isAuthenticated) {
+      dispatch(updateQuantity({ id: itemId, quantity: newQty }));
+      return;
+    }
     try {
       if (newQty <= 0) {
-        await api.delete(`/api/customer/cart/items/${cartItemId}`);
+        await api.delete(`/api/customer/cart/items/${itemId}`);
       } else {
-        await api.patch(`/api/customer/cart/items/${cartItemId}`, { quantity: newQty });
+        await api.patch(`/api/customer/cart/items/${itemId}`, { quantity: newQty });
       }
       await fetchCart();
     } catch (e) {
@@ -75,9 +81,13 @@ export default function CartScreen() {
     }
   };
 
-  const handleRemoveItem = async (cartItemId: number) => {
+  const handleRemoveItem = async (itemId: number) => {
+    if (!isAuthenticated) {
+      dispatch(removeItem(itemId));
+      return;
+    }
     try {
-      await api.delete(`/api/customer/cart/items/${cartItemId}`);
+      await api.delete(`/api/customer/cart/items/${itemId}`);
       await fetchCart();
     } catch (e) {
       console.error('Error removing cart item:', e);
@@ -85,6 +95,10 @@ export default function CartScreen() {
   };
 
   const handleClearCart = async () => {
+    if (!isAuthenticated) {
+      dispatch(clearCart());
+      return;
+    }
     try {
       await api.delete('/api/customer/cart', { params: vendorId ? { vendorId } : {} });
       await fetchCart();
@@ -151,14 +165,14 @@ export default function CartScreen() {
                   <View style={styles.qtyRow}>
                     <TouchableOpacity
                       style={styles.qtyBtn}
-                      onPress={() => handleUpdateQty(item.cartItemId!, item.quantity - 1)}
+                      onPress={() => handleUpdateQty(item.cartItemId || item.id, item.quantity - 1)}
                     >
                       <Ionicons name="remove" size={12} color={Colors.red} />
                     </TouchableOpacity>
                     <Text style={styles.qtyVal}>{item.quantity}</Text>
                     <TouchableOpacity
                       style={styles.qtyBtn}
-                      onPress={() => handleUpdateQty(item.cartItemId!, item.quantity + 1)}
+                      onPress={() => handleUpdateQty(item.cartItemId || item.id, item.quantity + 1)}
                     >
                       <Ionicons name="add" size={12} color={Colors.red} />
                     </TouchableOpacity>
@@ -166,7 +180,7 @@ export default function CartScreen() {
 
                   <TouchableOpacity
                     style={styles.removeBtn}
-                    onPress={() => handleRemoveItem(item.cartItemId!)}
+                    onPress={() => handleRemoveItem(item.cartItemId || item.id)}
                   >
                     <Ionicons name="trash-outline" size={18} color={Colors.gray400} />
                   </TouchableOpacity>
@@ -204,9 +218,22 @@ export default function CartScreen() {
           <View style={styles.footer}>
             <TouchableOpacity
               style={styles.checkoutBtn}
-              onPress={() => navigation.navigate('Checkout')}
+              onPress={() => {
+                if (isAuthenticated) {
+                  // Fully logged in — go straight to checkout
+                  navigation.navigate('Checkout');
+                } else {
+                  // Guest — must log in before placing an order
+                  navigation.navigate('Login', { returnToCheckout: true });
+                }
+              }}
             >
-              <Text style={styles.checkoutBtnText}>Proceed to Checkout</Text>
+              {!isAuthenticated && (
+                <Ionicons name="lock-closed-outline" size={15} color="#fff" style={{ marginRight: 6 }} />
+              )}
+              <Text style={styles.checkoutBtnText}>
+                {isAuthenticated ? 'Proceed to Checkout' : 'Login to Checkout'}
+              </Text>
               <Ionicons name="arrow-forward" size={16} color="#fff" />
             </TouchableOpacity>
           </View>
@@ -364,7 +391,7 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     fontSize: 15,
-    fontWeight: '850',
+    fontWeight: '900',
     color: Colors.textPrimary,
     borderBottomWidth: 1,
     borderBottomColor: Colors.gray100,

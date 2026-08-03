@@ -6,7 +6,9 @@ const BASE_URL = 'https://pro-licious-be.vercel.app';
 
 export const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 15000,
+  // 8s timeout: fast enough to avoid Android ANR errors,
+  // long enough to handle typical Vercel cold starts.
+  timeout: 8000,
   headers: {
     'Content-Type': 'application/json',
   },

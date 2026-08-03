@@ -547,10 +547,10 @@ export default function VendorDashboardScreen({ navigation }: any) {
             <Text style={styles.greeting}>
               {greeting()} 👋
             </Text>
-
+{/* 
             <Text style={styles.restaurant}>
               {user?.restaurantName || "Vendor"}
-            </Text>
+            </Text> */}
           </View>
 
           <TouchableOpacity

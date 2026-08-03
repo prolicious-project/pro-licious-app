@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 14,
-    fontWeight: '950',
+    fontWeight: '900',
     color: Colors.textPrimary,
   },
   emptyBox: {
@@ -203,6 +203,6 @@ const styles = StyleSheet.create({
   statusToggleText: {
     color: '#fff',
     fontSize: 11,
-    fontWeight: '850',
+    fontWeight: '900',
   },
 });

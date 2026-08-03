@@ -68,7 +68,8 @@ export default function CheckoutScreen() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigation.navigate('Login');
+      // Guest tried to reach checkout — send to Login with return flag
+      navigation.navigate('Login', { returnToCheckout: true });
       return;
     }
     if (cartItems.length === 0) {
@@ -551,7 +552,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 15,
-    fontWeight: '850',
+    fontWeight: '900',
     color: Colors.textPrimary,
   },
   addAddrBtn: {
@@ -634,7 +635,7 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     fontSize: 12,
-    fontWeight: '750',
+    fontWeight: '700',
     color: '#fff',
   },
   addressesList: {
@@ -733,7 +734,7 @@ const styles = StyleSheet.create({
   },
   summaryItemQty: {
     fontSize: 11,
-    color: Colors.gray550 || '#555555',
+    color: '#555555',
     marginTop: 2,
   },
   summaryItemPrice: {

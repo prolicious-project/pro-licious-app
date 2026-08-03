@@ -14,7 +14,7 @@ import {
   ImageStyle,
 } from 'react-native';
 import { useDispatch } from 'react-redux';
-import { setCredentials } from '../store/slices/authSlice';
+import { setCredentials, setGuest } from '../store/slices/authSlice';
 import { api } from '../lib/axios';
 import { authApi } from '../services/api';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -24,7 +24,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
-export default function LoginScreen({ navigation }: Props) {
+export default function LoginScreen({ navigation, route }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -33,6 +33,9 @@ export default function LoginScreen({ navigation }: Props) {
   const [showPassword, setShowPassword] = useState(false);
 
   const dispatch = useDispatch();
+
+  // Did the user get redirected here from Checkout because they aren't logged in?
+  const returnToCheckout = route?.params?.returnToCheckout ?? false;
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -56,8 +59,8 @@ export default function LoginScreen({ navigation }: Props) {
       setSuccess('Logged in successfully!');
 
       setTimeout(() => {
-        navigateBasedOnRole(role);
-      }, 1000);
+        navigateAfterLogin(role);
+      }, 800);
     } catch (err: any) {
       console.error(err);
       setError(err.response?.data?.message || 'Invalid credentials. Please try again.');
@@ -66,7 +69,9 @@ export default function LoginScreen({ navigation }: Props) {
     }
   };
 
-  const navigateBasedOnRole = (role: string) => {
+  // After successful login: vendor/rider/admin go to their stacks;
+  // customers return to checkout if that's what triggered the login, else home.
+  const navigateAfterLogin = (role: string) => {
     if (role === 'SUPER_ADMIN' || role === 'ADMIN') {
       navigation.replace('AdminStack');
     } else if (role === 'VENDOR') {
@@ -74,8 +79,25 @@ export default function LoginScreen({ navigation }: Props) {
     } else if (role === 'RIDER') {
       navigation.replace('RiderStack');
     } else {
-      navigation.replace('CustomerTabs');
+      // Customer: go back to checkout if that's what triggered login
+      if (returnToCheckout) {
+        navigation.replace('CustomerTabs');
+        // Small delay to let CustomerTabs mount, then push Checkout
+        setTimeout(() => {
+          navigation.navigate('CustomerTabs', undefined);
+          // Navigate into the nested HomeStack to Checkout
+          (navigation as any).navigate('Checkout');
+        }, 150);
+      } else {
+        navigation.replace('CustomerTabs');
+      }
     }
+  };
+
+  // "Skip" — let user browse as guest without logging in
+  const handleSkip = () => {
+    dispatch(setGuest());
+    navigation.replace('CustomerTabs');
   };
 
   return (
@@ -84,20 +106,33 @@ export default function LoginScreen({ navigation }: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent} 
+        {/* Skip button — top-right, like Swiggy/Zomato */}
+        {!returnToCheckout && (
+          <TouchableOpacity style={styles.skipButton} onPress={handleSkip} activeOpacity={0.7}>
+            <Text style={styles.skipText}>Skip</Text>
+            <Ionicons name="chevron-forward" size={14} color={Colors.red} />
+          </TouchableOpacity>
+        )}
+
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Language Selector */}
-          <TouchableOpacity style={styles.languageButton}>
-           
-          </TouchableOpacity>
+          {/* Return-to-checkout banner */}
+          {returnToCheckout && (
+            <View style={styles.checkoutBanner}>
+              <Ionicons name="lock-closed" size={16} color={Colors.red} />
+              <Text style={styles.checkoutBannerText}>
+                Please log in to complete your order
+              </Text>
+            </View>
+          )}
 
           {/* Logo */}
           <View style={styles.logoContainer}>
             <Image
-              source={require('../../assets/icon.png')}
+              source={require('../../assets/appicon.png')}
               style={styles.logo as ImageStyle}
               resizeMode="contain"
             />
@@ -146,14 +181,14 @@ export default function LoginScreen({ navigation }: Props) {
                 secureTextEntry={!showPassword}
                 editable={!isLoading}
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.passwordToggle}
               >
-                <Ionicons 
-                  name={showPassword ? 'eye-off' : 'eye'} 
-                  size={20} 
-                  color="#6b7280" 
+                <Ionicons
+                  name={showPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color="#6b7280"
                 />
               </TouchableOpacity>
             </View>
@@ -178,7 +213,7 @@ export default function LoginScreen({ navigation }: Props) {
             <View style={styles.divider} />
 
             {/* Sign Up Button */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.signupButton}
               onPress={() => navigation.navigate('Signup')}
             >
@@ -186,7 +221,17 @@ export default function LoginScreen({ navigation }: Props) {
             </TouchableOpacity>
           </View>
 
-          {/* Meta Branding */}
+          {/* Skip hint text — only when not forced */}
+          {!returnToCheckout && (
+            <TouchableOpacity onPress={handleSkip} style={styles.guestHintContainer}>
+              <Text style={styles.guestHintText}>
+                Just browsing?{' '}
+                <Text style={styles.guestHintLink}>Continue as guest →</Text>
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Branding */}
           <View style={styles.brandingContainer}>
             <Text style={styles.brandingText}>MeatInMinutes</Text>
           </View>
@@ -206,20 +251,52 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.lg,
-  },
-  
-  // Language Selector
-  languageButton: {
-    alignSelf: 'center',
-    marginBottom: Spacing.xl,
-  },
-  languageText: {
-    color: '#dc2626',
-    fontSize: 13,
-    fontWeight: '500',
+    paddingTop: 48, // leave space for skip button
   },
 
-  // Logo Container
+  // ── Skip Button (top-right, Swiggy/Zomato style) ──────────────────────────
+  skipButton: {
+    position: 'absolute',
+    top: 12,
+    right: 16,
+    zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: Colors.redBorder,
+    backgroundColor: Colors.redBg,
+  },
+  skipText: {
+    color: Colors.red,
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+
+  // ── Checkout-required banner ───────────────────────────────────────────────
+  checkoutBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: Colors.redBorder,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: Spacing.lg,
+  },
+  checkoutBannerText: {
+    flex: 1,
+    color: Colors.red,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // ── Logo ──────────────────────────────────────────────────────────────────
   logoContainer: {
     alignItems: 'center',
     marginBottom: Spacing.xl,
@@ -229,7 +306,7 @@ const styles = StyleSheet.create({
     height: 190,
   },
 
-  // Form Container
+  // ── Form Card ─────────────────────────────────────────────────────────────
   formContainer: {
     backgroundColor: '#ffffff',
     borderRadius: 8,
@@ -243,7 +320,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 
-  // Error and Success Boxes
+  // ── Alerts ────────────────────────────────────────────────────────────────
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -264,22 +341,22 @@ const styles = StyleSheet.create({
   successBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fef2f2',
+    backgroundColor: '#f0fdf4',
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: '#bbf7d0',
     borderRadius: 6,
     padding: 12,
     marginBottom: Spacing.base,
     gap: 8,
   },
   successText: {
-    color: '#dc2626',
+    color: '#16a34a',
     fontSize: 12,
     fontWeight: '500',
     flex: 1,
   },
 
-  // Input Container
+  // ── Inputs ────────────────────────────────────────────────────────────────
   inputContainer: {
     position: 'relative',
     marginVertical: Spacing.sm,
@@ -301,7 +378,7 @@ const styles = StyleSheet.create({
     top: 10,
   },
 
-  // Buttons
+  // ── Buttons ───────────────────────────────────────────────────────────────
   loginButton: {
     backgroundColor: '#dc2626',
     borderRadius: 6,
@@ -330,14 +407,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // Divider
+  // ── Divider ───────────────────────────────────────────────────────────────
   divider: {
     height: 1,
     backgroundColor: '#e5e5e5',
     marginVertical: Spacing.md,
   },
 
-  // Sign Up Button
+  // ── Sign Up ───────────────────────────────────────────────────────────────
   signupButton: {
     borderWidth: 2,
     borderColor: '#dc2626',
@@ -354,7 +431,21 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 
-  // Branding Container
+  // ── Guest hint ────────────────────────────────────────────────────────────
+  guestHintContainer: {
+    alignItems: 'center',
+    marginBottom: Spacing.base,
+  },
+  guestHintText: {
+    fontSize: 13,
+    color: Colors.gray500,
+  },
+  guestHintLink: {
+    color: Colors.red,
+    fontWeight: '600',
+  },
+
+  // ── Branding ──────────────────────────────────────────────────────────────
   brandingContainer: {
     alignItems: 'center',
     marginTop: Spacing.lg,
@@ -365,4 +456,3 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
-

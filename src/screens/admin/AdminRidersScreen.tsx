@@ -137,6 +137,6 @@ const styles = StyleSheet.create({
   },
   statusTagText: {
     fontSize: 10,
-    fontWeight: '850',
+    fontWeight: '900',
   },
 });

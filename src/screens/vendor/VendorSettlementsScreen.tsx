@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   payoutDetail: {
     fontSize: 12,
     color: Colors.gray700,
-    fontWeight: '650',
+    fontWeight: '600',
   },
   payoutDetailDate: {
     fontSize: 10,

@@ -61,18 +61,18 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     if (isFocused) {
-      if (!isAuthenticated) {
-        navigation.navigate('Login');
-        return;
+      if (isAuthenticated) {
+        if (user && user.role && user.role !== 'CUSTOMER') {
+          // Route to dashboard based on role
+          if (user.role === 'VENDOR') navigation.replace('VendorStack');
+          else if (user.role === 'RIDER') navigation.replace('RiderStack');
+          else if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') navigation.replace('AdminStack');
+          return;
+        }
+        fetchProfileData();
+      } else {
+        setLoading(false);
       }
-      if (user && user.role && user.role !== 'CUSTOMER') {
-        // Route to dashboard based on role
-        if (user.role === 'VENDOR') navigation.replace('VendorStack');
-        else if (user.role === 'RIDER') navigation.replace('RiderStack');
-        else if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') navigation.replace('AdminStack');
-        return;
-      }
-      fetchProfileData();
     }
   }, [isAuthenticated, isFocused]);
 
@@ -127,6 +127,31 @@ export default function ProfileScreen() {
   const handleLogout = () => {
     handleLogoutWithConfirm(dispatch, navigation);
   };
+
+  if (!isAuthenticated) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>My Profile</Text>
+        </View>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+          <Ionicons name="person-outline" size={56} color={Colors.gray300} />
+          <Text style={{ fontSize: 18, fontWeight: '700', color: Colors.textPrimary, marginTop: 16, marginBottom: 8 }}>
+            Your Profile
+          </Text>
+          <Text style={{ fontSize: 13, color: Colors.textSecondary, textAlign: 'center', marginBottom: 24 }}>
+            Log in to view and manage your profile, saved addresses, and active orders.
+          </Text>
+          <TouchableOpacity
+            style={{ backgroundColor: Colors.red, borderRadius: 8, paddingHorizontal: 32, paddingVertical: 12 }}
+            onPress={() => navigation.navigate('Login')}
+          >
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Login</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (loading) {
     return <LoadingSpinner fullScreen />;

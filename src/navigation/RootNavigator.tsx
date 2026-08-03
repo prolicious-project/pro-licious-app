@@ -24,7 +24,7 @@ import AdminStackNavigator from './AdminStackNavigator';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export type RootStackParamList = {
-  Login: undefined;
+  Login: { returnToCheckout?: boolean } | undefined;
   Signup: undefined;
   CustomerTabs: undefined;
   VendorStack: undefined;
@@ -35,30 +35,47 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
-  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, isGuest, user } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch();
   const [bootstrapping, setBootstrapping] = useState(true);
 
   // On app start: restore session from AsyncStorage
+  // Uses Promise.race to guarantee setBootstrapping(false) fires within 6s
+  // even if the backend is cold-starting or the network is restricted.
   useEffect(() => {
+    const SESSION_TIMEOUT_MS = 6000;
+
     const restoreSession = async () => {
       try {
         const token = await AsyncStorage.getItem('token');
         if (token) {
-          const res = await api.get('/api/auth/me', {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const userData = res.data?.data;
+          // Race the API call against a timeout so the app never hangs
+          const timeoutPromise = new Promise<null>((resolve) =>
+            setTimeout(() => resolve(null), SESSION_TIMEOUT_MS)
+          );
+          const apiPromise = api
+            .get('/api/auth/me', {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+            .then((res) => res.data?.data ?? null)
+            .catch(() => null);
+
+          const userData = await Promise.race([apiPromise, timeoutPromise]);
           if (userData) {
-            dispatch(setCredentials({ user: userData, token }));
+            dispatch(setCredentials({ user: userData as any, token }));
+          } else {
+            // Timed out or API failed — clear stale token and show Login
+            await AsyncStorage.removeItem('token');
           }
         }
       } catch (e) {
-        await AsyncStorage.removeItem('token');
+        // Storage read error — clear and proceed to Login
+        try { await AsyncStorage.removeItem('token'); } catch {}
       } finally {
         setBootstrapping(false);
       }
     };
+
     restoreSession();
   }, []);
 
@@ -67,18 +84,22 @@ export default function RootNavigator() {
   }
 
   const getInitialRoute = (): keyof RootStackParamList => {
-    if (!isAuthenticated) return 'Login';
-    switch (user?.role) {
-      case 'SUPER_ADMIN':
-      case 'ADMIN':
-        return 'AdminStack';
-      case 'VENDOR':
-        return 'VendorStack';
-      case 'RIDER':
-        return 'RiderStack';
-      default:
-        return 'CustomerTabs';
+    if (isAuthenticated) {
+      switch (user?.role) {
+        case 'SUPER_ADMIN':
+        case 'ADMIN':
+          return 'AdminStack';
+        case 'VENDOR':
+          return 'VendorStack';
+        case 'RIDER':
+          return 'RiderStack';
+        default:
+          return 'CustomerTabs';
+      }
     }
+    // Guest users go straight to customer browsing, others see Login
+    if (isGuest) return 'CustomerTabs';
+    return 'Login';
   };
 
   return (
@@ -91,7 +112,7 @@ export default function RootNavigator() {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
 
-        {/* Customer */}
+        {/* Customer — accessible by both authenticated users and guests */}
         <Stack.Screen name="CustomerTabs" component={CustomerTabNavigator} />
 
         {/* Role dashboards */}

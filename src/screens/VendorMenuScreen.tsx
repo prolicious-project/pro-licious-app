@@ -16,7 +16,7 @@ import { Colors, Spacing, Radius, Shadow } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../lib/axios';
 import { useDispatch, useSelector } from 'react-redux';
-import { setCart } from '../store/slices/cartSlice';
+import { setCart, addItem, updateQuantity } from '../store/slices/cartSlice';
 import { RootState } from '../store/store';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -63,11 +63,6 @@ export default function VendorMenuScreen() {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigation.navigate('Login');
-      return;
-    }
-
     Promise.all([
       api.get(`/api/customer/vendors/${id}`),
       api.get(`/api/customer/vendors/${id}/menu`),
@@ -79,13 +74,25 @@ export default function VendorMenuScreen() {
         if (items.length > 0 && items[0].categoryName) {
           setActiveTab(items[0].categoryName);
         }
-        await fetchAndSyncCart(Number(id), items);
+        if (isAuthenticated) {
+          await fetchAndSyncCart(Number(id), items);
+        }
       })
       .catch((err) => console.error('Error fetching vendor data:', err))
       .finally(() => setLoading(false));
   }, [isAuthenticated, id]);
 
   const handleAddItem = async (item: any) => {
+    if (!isAuthenticated) {
+      dispatch(addItem({
+        id: item.id,
+        name: item.name,
+        price: String(item.price),
+        quantity: 1,
+        vendorId: Number(id),
+      }));
+      return;
+    }
     try {
       await api.post('/api/customer/cart/items', {
         vendorId: Number(id),
@@ -99,6 +106,10 @@ export default function VendorMenuScreen() {
   };
 
   const handleUpdateQuantity = async (item: any, newQty: number) => {
+    if (!isAuthenticated) {
+      dispatch(updateQuantity({ id: item.id, quantity: newQty }));
+      return;
+    }
     try {
       const currentItem = cartItems.find((i) => i.id === item.id);
       if (!currentItem) return;
@@ -151,7 +162,7 @@ export default function VendorMenuScreen() {
         <View style={styles.bannerContainer}>
           <Image
             source={{ uri: 'https://images.unsplash.com/photo-1607006411061-0b5c1fb981f4?q=80&w=1200&auto=format&fit=crop' }}
-            style={styles.bannerImg}
+            style={styles.bannerImg as any}
           />
           <View style={styles.bannerOverlay} />
           <View style={styles.bannerTextContainer}>
@@ -229,7 +240,7 @@ export default function VendorMenuScreen() {
                   <View style={styles.itemAction}>
                     <Image
                       source={{ uri: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?q=80&w=200&auto=format&fit=crop' }}
-                      style={styles.itemImg}
+                      style={styles.itemImg as any}
                     />
                     <View style={styles.qtyContainer}>
                       {qty === 0 ? (
@@ -447,7 +458,7 @@ const styles = StyleSheet.create({
   },
   vegText: {
     fontSize: 8,
-    fontWeight: '850',
+    fontWeight: '900',
   },
   itemAction: {
     alignItems: 'center',

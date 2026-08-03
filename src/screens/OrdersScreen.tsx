@@ -36,12 +36,10 @@ export default function OrdersScreen() {
   };
 
   useEffect(() => {
-    if (isFocused) {
-      if (!isAuthenticated) {
-        navigation.navigate('Login');
-        return;
-      }
+    if (isFocused && isAuthenticated) {
       fetchOrders();
+    } else if (!isAuthenticated) {
+      setLoading(false);
     }
   }, [isAuthenticated, isFocused]);
 
@@ -49,6 +47,31 @@ export default function OrdersScreen() {
     const d = new Date(dateStr);
     return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   };
+
+  if (!isAuthenticated) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>My Orders</Text>
+        </View>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+          <Ionicons name="receipt-outline" size={56} color={Colors.gray300} />
+          <Text style={{ fontSize: 18, fontWeight: '700', color: Colors.textPrimary, marginTop: 16, marginBottom: 8 }}>
+            View your orders
+          </Text>
+          <Text style={{ fontSize: 13, color: Colors.textSecondary, textAlign: 'center', marginBottom: 24 }}>
+            Login to track your current and past orders.
+          </Text>
+          <TouchableOpacity
+            style={{ backgroundColor: Colors.red, borderRadius: 8, paddingHorizontal: 32, paddingVertical: 12 }}
+            onPress={() => navigation.navigate('Login')}
+          >
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Login</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (loading) {
     return <LoadingSpinner fullScreen />;
@@ -216,7 +239,7 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 12,
-    color: Colors.gray550 || '#555555',
+    color: '#555555',
   },
   totalRow: {
     flexDirection: 'row',
