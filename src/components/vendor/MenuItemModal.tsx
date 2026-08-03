@@ -153,6 +153,8 @@ export default function MenuItemModal({
 
         price: Number(price),
 
+        
+
         categoryId,
 
         stockQuantity: Number(stockQuantity),

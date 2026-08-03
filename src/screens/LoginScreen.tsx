@@ -132,7 +132,7 @@ export default function LoginScreen({ navigation, route }: Props) {
           {/* Logo */}
           <View style={styles.logoContainer}>
             <Image
-              source={require('../../assets/appicon.png')}
+              source={require('../../assets/icon.png')}
               style={styles.logo as ImageStyle}
               resizeMode="contain"
             />
