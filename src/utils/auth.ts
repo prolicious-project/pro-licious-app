@@ -1,9 +1,7 @@
-// src/utils/auth.ts
-// Shared authentication utilities to avoid code duplication
-
 import { Alert } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
 import { logout } from '../store/slices/authSlice';
+import { api } from '../lib/axios';
 
 /**
  * Navigate to Login screen from any navigator depth.
@@ -34,7 +32,13 @@ export const handleLogoutWithConfirm = (dispatch: any, navigation: any) => {
     {
       text: 'Sign Out',
       style: 'destructive',
-      onPress: () => {
+      onPress: async () => {
+        try {
+          // Call API before clearing local store so the request contains Authorization token
+          await api.post('/api/auth/logout', {});
+        } catch (e) {
+          console.log('Backend signout call error:', e);
+        }
         dispatch(logout());
         resetToLogin(navigation);
       },
@@ -46,7 +50,13 @@ export const handleLogoutWithConfirm = (dispatch: any, navigation: any) => {
  * Helper function for immediate logout without confirmation
  * Used by Admin, Rider, and Vendor screens
  */
-export const handleLogoutImmediate = (dispatch: any, navigation: any) => {
+export const handleLogoutImmediate = async (dispatch: any, navigation: any) => {
+  try {
+    // Call API before clearing local store so the request contains Authorization token
+    await api.post('/api/auth/logout', {});
+  } catch (e) {
+    console.log('Backend signout call error:', e);
+  }
   dispatch(logout());
   resetToLogin(navigation);
 };
