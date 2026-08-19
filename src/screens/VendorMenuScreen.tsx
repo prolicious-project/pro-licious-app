@@ -69,10 +69,18 @@ export default function VendorMenuScreen() {
     ])
       .then(async ([vendorRes, menuRes]) => {
         setVendor(vendorRes.data?.data);
-        const items = menuRes.data?.data?.items || menuRes.data?.data || [];
+        const cats = menuRes.data?.data?.categories || [];
+        const rawItems = menuRes.data?.data?.items || [];
+        const items = rawItems.map((item: any) => {
+          const category = cats.find((c: any) => c.id === item.categoryId);
+          return {
+            ...item,
+            categoryName: category ? category.name : 'Uncategorized',
+          };
+        });
         setMenu(items);
-        if (items.length > 0 && items[0].categoryName) {
-          setActiveTab(items[0].categoryName);
+        if (items.length > 0) {
+          setActiveTab(items[0].categoryName || 'Uncategorized');
         }
         if (isAuthenticated) {
           await fetchAndSyncCart(Number(id), items);

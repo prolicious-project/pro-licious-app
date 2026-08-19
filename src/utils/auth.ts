@@ -2,9 +2,24 @@
 // Shared authentication utilities to avoid code duplication
 
 import { Alert } from 'react-native';
-import { useDispatch } from 'react-redux';
-import { useNavigation } from '@react-navigation/native';
+import { CommonActions } from '@react-navigation/native';
 import { logout } from '../store/slices/authSlice';
+
+/**
+ * Navigate to Login screen from any navigator depth.
+ * Uses CommonActions.reset which propagates up through nested navigators
+ * (e.g. from a tab inside CustomerTabs to the root stack).
+ */
+const resetToLogin = (navigation: any) => {
+  // Try the root navigator first (handles nested tab/stack cases)
+  const root = navigation.getParent() || navigation;
+  root.dispatch(
+    CommonActions.reset({
+      index: 0,
+      routes: [{ name: 'Login' }],
+    })
+  );
+};
 
 /**
  * Helper function to handle logout with confirmation dialog
@@ -18,10 +33,7 @@ export const handleLogoutWithConfirm = (dispatch: any, navigation: any) => {
       style: 'destructive',
       onPress: () => {
         dispatch(logout());
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Login' }],
-        });
+        resetToLogin(navigation);
       },
     },
   ]);
@@ -33,8 +45,5 @@ export const handleLogoutWithConfirm = (dispatch: any, navigation: any) => {
  */
 export const handleLogoutImmediate = (dispatch: any, navigation: any) => {
   dispatch(logout());
-  navigation.reset({
-    index: 0,
-    routes: [{ name: 'Login' }],
-  });
+  resetToLogin(navigation);
 };

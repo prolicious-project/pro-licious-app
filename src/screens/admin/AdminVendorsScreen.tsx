@@ -181,6 +181,7 @@ import LoadingSpinner from "../../components/LoadingSpinner";
 export default function AdminVendorsScreen({ navigation }: any) {
   const [vendors, setVendors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);  // separate state for create action
 
   /* -------------------------------
         Add Vendor Modal
@@ -242,7 +243,7 @@ export default function AdminVendorsScreen({ navigation }: any) {
     }
 
     try {
-      setLoading(true);
+      setSaving(true);  // use saving, NOT loading — avoids hiding the vendor list
 
       await api.post("/api/admin/vendors", {
         name: businessName,
@@ -271,7 +272,7 @@ export default function AdminVendorsScreen({ navigation }: any) {
       setPanNumber("");
       setFssaiLicense("");
 
-      fetchVendors();
+      fetchVendors();  // refresh list
     } catch (err: any) {
       console.log(err);
 
@@ -280,7 +281,7 @@ export default function AdminVendorsScreen({ navigation }: any) {
         err?.response?.data?.message || "Unable to create vendor."
       );
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
@@ -386,15 +387,15 @@ export default function AdminVendorsScreen({ navigation }: any) {
                   </Text>
 
                   <Text style={styles.vendorEmail}>
-                    {vendor.email}
+                    {vendor.email || vendor.userEmail || '—'}
                   </Text>
 
                   <Text style={styles.vendorPhone}>
-                    {vendor.phone}
+                    {vendor.phone || vendor.userPhone || '—'}
                   </Text>
 
                   <Text style={styles.vendorAddress}>
-                    {vendor.businessAddress}
+                    {vendor.businessAddress || '—'}
                   </Text>
                 </View>
 
@@ -600,8 +601,9 @@ export default function AdminVendorsScreen({ navigation }: any) {
             {/* Buttons */}
 
             <TouchableOpacity
-              style={styles.createBtn}
+              style={[styles.createBtn, saving && { opacity: 0.6 }]}
               onPress={createVendor}
+              disabled={saving}
             >
               <Ionicons
                 name="checkmark-circle"
@@ -610,7 +612,7 @@ export default function AdminVendorsScreen({ navigation }: any) {
               />
 
               <Text style={styles.createBtnText}>
-                Create Vendor
+                {saving ? "Creating..." : "Create Vendor"}
               </Text>
             </TouchableOpacity>
 

@@ -2,7 +2,7 @@
   "expo": {
     "name": "MeatInMinutes",
     "slug": "pro-licious-app",
-    "version": "1.0.1",
+    "version": "1.0.4",
     "orientation": "portrait",
     "runtimeVersion": {
       "policy": "fingerprint"
@@ -22,6 +22,7 @@
       "bundleIdentifier": "com.meatinminutes.app"
     },
     "android": {
+      "versionCode": 4,
       "adaptiveIcon": {
         "foregroundImage": "./assets/appicon.png",
         "backgroundColor": "#09090b"
@@ -38,7 +39,16 @@
       }
     },
     "plugins": [
-      "expo-font",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.ttf",
+            "node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.ttf",
+            "node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome.ttf"
+          ]
+        }
+      ],
       "expo-asset",
       [
         "expo-splash-screen",

@@ -367,7 +367,6 @@ Create or update `eas.json` in the project root:
   }
 }
 ```
-
 **4. Build the APK**
 
 ```powershell

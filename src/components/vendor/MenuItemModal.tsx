@@ -101,11 +101,7 @@ export default function MenuItemModal({
 
     setPrice("");
 
-    setCategoryId(
-      categories.length
-        ? categories[0].id
-        : undefined
-    );
+    setCategoryId(undefined);
 
     setStockQuantity("-1");
 
@@ -128,8 +124,7 @@ export default function MenuItemModal({
     if (Number(price) <= 0)
       obj.price = "Invalid price";
 
-    if (!categoryId)
-      obj.category = "Select category";
+    // category is now optional, no validation check needed
 
     if (Number(preparationTime) <= 0)
       obj.preparationTime =
@@ -287,9 +282,10 @@ export default function MenuItemModal({
               <Picker
                 selectedValue={categoryId}
                 onValueChange={(value) =>
-                  setCategoryId(value)
+                  setCategoryId(value || undefined)
                 }
               >
+                <Picker.Item label="None (No Category)" value={undefined} />
                 {categories.map((cat) => (
                   <Picker.Item
                     key={cat.id}

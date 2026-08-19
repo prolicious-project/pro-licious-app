@@ -436,11 +436,11 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   headerCartBtn: {
-  width: 40,
-  height: 40,
-  justifyContent: 'center',
-  alignItems: 'center',
-},
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   scrollContent: {
     paddingBottom: Spacing['3xl'],
   },
