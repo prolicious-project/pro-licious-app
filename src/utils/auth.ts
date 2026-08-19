@@ -11,8 +11,11 @@ import { logout } from '../store/slices/authSlice';
  * (e.g. from a tab inside CustomerTabs to the root stack).
  */
 const resetToLogin = (navigation: any) => {
-  // Try the root navigator first (handles nested tab/stack cases)
-  const root = navigation.getParent() || navigation;
+  // Traverse up to find the topmost parent navigator (RootNavigator)
+  let root = navigation;
+  while (root.getParent()) {
+    root = root.getParent();
+  }
   root.dispatch(
     CommonActions.reset({
       index: 0,
