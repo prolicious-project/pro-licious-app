@@ -26,7 +26,12 @@ export default function RiderDashboardScreen({ navigation }: any) {
   const [online, setOnline] = useState(false);
   const [activeOrders, setActiveOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [otp, setOtp] = useState('');
+  const [otpMap, setOtpMap] = useState<Record<number, string>>({});
+  const [actionLoading, setActionLoading] = useState<Record<number, boolean>>({});
+
+  const setOrderOtp = (orderId: number, val: string) => {
+    setOtpMap((prev) => ({ ...prev, [orderId]: val }));
+  };
 
   const fetchRiderData = async () => {
     try {
@@ -59,7 +64,9 @@ export default function RiderDashboardScreen({ navigation }: any) {
   };
 
   const handleAction = async (order: any) => {
+    if (actionLoading[order.id]) return;
     try {
+      setActionLoading((prev) => ({ ...prev, [order.id]: true }));
       let endpoint = `/api/rider/orders/${order.id}/accept`;
       if (order.assignmentStatus === 'ACCEPTED') {
         if (order.status === 'ACCEPTED' || order.status === 'READY') {
@@ -72,26 +79,46 @@ export default function RiderDashboardScreen({ navigation }: any) {
       }
 
       await api.patch(endpoint);
-      fetchRiderData();
+      await fetchRiderData();
     } catch (e: any) {
       console.error(e);
       Alert.alert('Notice', e.response?.data?.message || 'Action could not be completed.');
-      fetchRiderData();
+      await fetchRiderData();
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [order.id]: false }));
+    }
+  };
+
+  const handleReject = async (orderId: number) => {
+    if (actionLoading[orderId]) return;
+    try {
+      setActionLoading((prev) => ({ ...prev, [orderId]: true }));
+      await api.patch(`/api/rider/orders/${orderId}/reject`);
+      await fetchRiderData();
+    } catch (e: any) {
+      Alert.alert('Notice', e.response?.data?.message || 'Unable to reject order.');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [orderId]: false }));
     }
   };
 
   const handleDeliver = async (orderId: number) => {
-    if (!otp || otp.length !== 6) {
-      Alert.alert('Error', 'Please enter a valid 6-digit delivery OTP.');
+    const orderOtp = (otpMap[orderId] || '').trim();
+    if (!orderOtp || orderOtp.length !== 6) {
+      Alert.alert('Error', 'Please enter a valid 6-digit delivery OTP (Use 123456 for demo).');
       return;
     }
+    if (actionLoading[orderId]) return;
     try {
-      await api.post(`/api/rider/orders/${orderId}/deliver`, { otp });
-      setOtp('');
+      setActionLoading((prev) => ({ ...prev, [orderId]: true }));
+      await api.post(`/api/rider/orders/${orderId}/deliver`, { otp: orderOtp });
+      setOtpMap((prev) => ({ ...prev, [orderId]: '' }));
       Alert.alert('Success', 'Order delivered successfully!');
-      fetchRiderData();
+      await fetchRiderData();
     } catch (e: any) {
-      Alert.alert('Delivery Error', e.response?.data?.message || 'Invalid delivery confirmation code.');
+      Alert.alert('Delivery Error', e.response?.data?.message || 'Invalid delivery confirmation code. Use 123456.');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [orderId]: false }));
     }
   };
 
@@ -131,6 +158,7 @@ export default function RiderDashboardScreen({ navigation }: any) {
           activeOrders.map((order) => {
             const showOtpField = order.status === 'ARRIVED_CUSTOMER';
             const isAcceptedByMe = order.assignmentStatus === 'ACCEPTED';
+            const isBusy = !!actionLoading[order.id];
             const addressText = order.address
               ? `${order.address.houseNumber || ''} ${order.address.street || ''}, ${order.address.city || ''} (${order.address.pincode || ''})`.trim()
               : `House #${order.addressId || 'N/A'}`;
@@ -155,32 +183,56 @@ export default function RiderDashboardScreen({ navigation }: any) {
 
                 {showOtpField ? (
                   <View style={styles.otpBlock}>
-                    <Text style={styles.otpLabel}>Enter Customer Delivery OTP</Text>
+                    <Text style={styles.otpLabel}>Enter Customer Delivery OTP (Demo: 123456)</Text>
                     <TextInput
                       style={styles.otpInput}
-                      placeholder="000000"
-                      value={otp}
-                      onChangeText={(t) => setOtp(t.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="123456"
+                      value={otpMap[order.id] || ''}
+                      onChangeText={(t) => setOrderOtp(order.id, t.replace(/\D/g, '').slice(0, 6))}
                       keyboardType="number-pad"
                       maxLength={6}
+                      editable={!isBusy}
                     />
                     <TouchableOpacity
-                      style={styles.actionBtn}
+                      style={[styles.actionBtn, isBusy && styles.disabledBtn]}
                       onPress={() => handleDeliver(order.id)}
+                      disabled={isBusy}
                     >
-                      <Text style={styles.actionBtnText}>Confirm Delivery</Text>
+                      <Text style={styles.actionBtnText}>
+                        {isBusy ? 'Processing...' : 'Confirm Delivery'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : !isAcceptedByMe ? (
+                  <View style={styles.btnRow}>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, styles.acceptBtn, isBusy && styles.disabledBtn]}
+                      onPress={() => handleAction(order)}
+                      disabled={isBusy}
+                    >
+                      <Text style={styles.actionBtnText}>
+                        {isBusy ? 'Accepting...' : 'Accept Order'}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, styles.rejectBtn, isBusy && styles.disabledBtn]}
+                      onPress={() => handleReject(order.id)}
+                      disabled={isBusy}
+                    >
+                      <Text style={styles.rejectBtnText}>Reject</Text>
                     </TouchableOpacity>
                   </View>
                 ) : (
                   <TouchableOpacity
-                    style={styles.actionBtn}
+                    style={[styles.actionBtn, isBusy && styles.disabledBtn]}
                     onPress={() => handleAction(order)}
+                    disabled={isBusy}
                   >
                     <Text style={styles.actionBtnText}>
-                      {!isAcceptedByMe && 'Accept Order'}
-                      {isAcceptedByMe && (order.status === 'ACCEPTED' || order.status === 'READY') && 'Arrived at Shop'}
-                      {isAcceptedByMe && order.status === 'ARRIVED_VENDOR' && 'Picked Up Order'}
-                      {isAcceptedByMe && order.status === 'PICKED_UP' && 'Arrived at Customer Address'}
+                      {isBusy && 'Updating...'}
+                      {!isBusy && (order.status === 'ACCEPTED' || order.status === 'READY') && 'Arrived at Shop'}
+                      {!isBusy && order.status === 'ARRIVED_VENDOR' && 'Picked Up Order'}
+                      {!isBusy && order.status === 'PICKED_UP' && 'Arrived at Customer Address'}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -311,6 +363,27 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     justifyContent: 'center',
     alignItems: 'center',
+    flex: 1,
+  },
+  btnRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  acceptBtn: {
+    backgroundColor: Colors.green,
+  },
+  rejectBtn: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: Colors.red,
+  },
+  rejectBtnText: {
+    color: Colors.red,
+    fontWeight: '800',
+    fontSize: 12,
+  },
+  disabledBtn: {
+    opacity: 0.6,
   },
   actionBtnText: {
     color: '#fff',
