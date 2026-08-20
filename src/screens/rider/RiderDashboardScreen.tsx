@@ -58,17 +58,25 @@ export default function RiderDashboardScreen({ navigation }: any) {
     }
   };
 
-  const handleAction = async (orderId: number, status: string) => {
+  const handleAction = async (order: any) => {
     try {
-      let endpoint = `/api/rider/orders/${orderId}/accept`;
-      if (status === 'ACCEPTED') endpoint = `/api/rider/orders/${orderId}/arrived-vendor`;
-      else if (status === 'ARRIVED_VENDOR') endpoint = `/api/rider/orders/${orderId}/picked-up`;
-      else if (status === 'PICKED_UP') endpoint = `/api/rider/orders/${orderId}/arrived-customer`;
+      let endpoint = `/api/rider/orders/${order.id}/accept`;
+      if (order.assignmentStatus === 'ACCEPTED') {
+        if (order.status === 'ACCEPTED' || order.status === 'READY') {
+          endpoint = `/api/rider/orders/${order.id}/arrived-vendor`;
+        } else if (order.status === 'ARRIVED_VENDOR') {
+          endpoint = `/api/rider/orders/${order.id}/picked-up`;
+        } else if (order.status === 'PICKED_UP') {
+          endpoint = `/api/rider/orders/${order.id}/arrived-customer`;
+        }
+      }
 
       await api.patch(endpoint);
       fetchRiderData();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      Alert.alert('Notice', e.response?.data?.message || 'Action could not be completed.');
+      fetchRiderData();
     }
   };
 
@@ -113,25 +121,36 @@ export default function RiderDashboardScreen({ navigation }: any) {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
         {/* Assigned Orders List */}
-        <Text style={styles.sectionTitle}>Assigned Deliveries</Text>
+        <Text style={styles.sectionTitle}>Available & Active Deliveries</Text>
 
         {activeOrders.length === 0 ? (
           <View style={styles.emptyBox}>
-            <Text style={styles.emptyText}>No active orders assigned to you.</Text>
+            <Text style={styles.emptyText}>No active orders available right now.</Text>
           </View>
         ) : (
           activeOrders.map((order) => {
             const showOtpField = order.status === 'ARRIVED_CUSTOMER';
+            const isAcceptedByMe = order.assignmentStatus === 'ACCEPTED';
+            const addressText = order.address
+              ? `${order.address.houseNumber || ''} ${order.address.street || ''}, ${order.address.city || ''} (${order.address.pincode || ''})`.trim()
+              : `House #${order.addressId || 'N/A'}`;
+
             return (
               <View key={order.id} style={styles.orderCard}>
                 <View style={styles.cardHeader}>
                   <Text style={styles.orderNum}>Order #{order.orderNumber}</Text>
-                  <Text style={styles.orderStatus}>{order.status}</Text>
+                  <Text style={styles.orderStatus}>
+                    {isAcceptedByMe ? order.status : 'AVAILABLE FOR PICKUP'}
+                  </Text>
                 </View>
 
                 <View style={styles.cardBody}>
                   <Text style={styles.detailText}>Vendor: {order.vendor?.name || 'Local shop'}</Text>
-                  <Text style={styles.detailText}>Delivery to: House #{order.addressId}</Text>
+                  {order.vendor?.businessAddress ? (
+                    <Text style={styles.detailText}>Shop Address: {order.vendor.businessAddress}</Text>
+                  ) : null}
+                  <Text style={styles.detailText}>Delivery To: {addressText}</Text>
+                  <Text style={styles.detailText}>Total Amount: ₹{order.totalAmount}</Text>
                 </View>
 
                 {showOtpField ? (
@@ -155,13 +174,13 @@ export default function RiderDashboardScreen({ navigation }: any) {
                 ) : (
                   <TouchableOpacity
                     style={styles.actionBtn}
-                    onPress={() => handleAction(order.id, order.status)}
+                    onPress={() => handleAction(order)}
                   >
                     <Text style={styles.actionBtnText}>
-                      {order.status === 'READY' && 'Accept Order'}
-                      {order.status === 'ACCEPTED' && 'Arrived at Shop'}
-                      {order.status === 'ARRIVED_VENDOR' && 'Picked Up Order'}
-                      {order.status === 'PICKED_UP' && 'Arrived at Customer Address'}
+                      {!isAcceptedByMe && 'Accept Order'}
+                      {isAcceptedByMe && (order.status === 'ACCEPTED' || order.status === 'READY') && 'Arrived at Shop'}
+                      {isAcceptedByMe && order.status === 'ARRIVED_VENDOR' && 'Picked Up Order'}
+                      {isAcceptedByMe && order.status === 'PICKED_UP' && 'Arrived at Customer Address'}
                     </Text>
                   </TouchableOpacity>
                 )}

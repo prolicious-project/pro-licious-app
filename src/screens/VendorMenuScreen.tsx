@@ -179,7 +179,16 @@ export default function VendorMenuScreen() {
                 {vendor.status === 'ACTIVE' ? 'OPEN NOW' : 'CLOSED'}
               </Text>
             </View>
-            <Text style={styles.vendorName}>{vendor.name}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              {vendor.logoUrl ? (
+                <Image source={{ uri: vendor.logoUrl }} style={styles.vendorLogoIcon} />
+              ) : (
+                <View style={styles.defaultLogoBadge}>
+                  <Ionicons name="storefront-outline" size={20} color="#dc2626" />
+                </View>
+              )}
+              <Text style={styles.vendorName}>{vendor.name}</Text>
+            </View>
             <View style={styles.metaRow}>
               <Ionicons name="star" size={14} color="#eab308" />
               <Text style={styles.metaText}>4.8 • 25-40 min</Text>
@@ -549,11 +558,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.base,
     paddingVertical: 8,
     borderRadius: Radius.sm,
-    gap: 4,
   },
   cartBarBtnText: {
     color: '#fff',
-    fontWeight: '700',
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '800',
+    marginRight: 4,
+  },
+  vendorLogoIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#fff',
+  },
+  defaultLogoBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

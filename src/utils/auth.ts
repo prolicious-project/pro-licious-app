@@ -1,4 +1,4 @@
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
 import { logout } from '../store/slices/authSlice';
 import { api } from '../lib/axios';
@@ -27,20 +27,34 @@ const resetToLogin = (navigation: any) => {
  * Used by ProfileScreen and Customer screens
  */
 export const handleLogoutWithConfirm = (dispatch: any, navigation: any) => {
+  console.log('auth: handleLogoutWithConfirm called');
+
+  const doLogout = async () => {
+    try {
+      // Call API before clearing local store so the request contains Authorization token
+      await api.post('/api/auth/logout', {});
+    } catch (e) {
+      console.log('Backend signout call error:', e);
+    }
+    dispatch(logout());
+    resetToLogin(navigation);
+  };
+
+  // On web Alert.alert may not behave as expected; use window.confirm fallback
+  if (Platform.OS === 'web') {
+    const ok = typeof window !== 'undefined' ? window.confirm('Are you sure you want to sign out?') : true;
+    if (ok) doLogout();
+    return;
+  }
+
   Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
     { text: 'Cancel', style: 'cancel' },
     {
       text: 'Sign Out',
       style: 'destructive',
       onPress: async () => {
-        try {
-          // Call API before clearing local store so the request contains Authorization token
-          await api.post('/api/auth/logout', {});
-        } catch (e) {
-          console.log('Backend signout call error:', e);
-        }
-        dispatch(logout());
-        resetToLogin(navigation);
+        console.log('auth: user confirmed sign out (Alert)');
+        await doLogout();
       },
     },
   ]);

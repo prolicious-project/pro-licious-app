@@ -9,6 +9,7 @@ import {
   TextInput,
   Alert,
   SafeAreaView,
+  Modal,
 } from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
@@ -17,7 +18,7 @@ import { api } from '../lib/axios';
 import { Colors, Spacing, Radius, Shadow } from '../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { handleLogoutWithConfirm } from '../utils/auth';
+import { handleLogoutWithConfirm, handleLogoutImmediate } from '../utils/auth';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -37,6 +38,7 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState('');
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const fetchProfileData = async () => {
     try {
@@ -125,7 +127,15 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    handleLogoutWithConfirm(dispatch, navigation);
+    console.log('ProfileScreen: handleLogout pressed');
+    // Show in-app confirmation modal instead of browser confirm
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = async () => {
+    setShowLogoutModal(false);
+    console.log('ProfileScreen: confirmLogout');
+    await handleLogoutImmediate(dispatch, navigation);
   };
 
   if (!isAuthenticated) {
@@ -236,14 +246,37 @@ export default function ProfileScreen() {
                   <Ionicons name="create-outline" size={16} color={Colors.gray700} />
                   <Text style={styles.editProfileBtnText}>Edit Profile</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.signOutBtn} onPress={handleLogout}>
-                  <Ionicons name="log-out-outline" size={16} color={Colors.red} />
-                  <Text style={styles.signOutBtnText}>Sign Out</Text>
-                </TouchableOpacity>
+                    <TouchableOpacity style={styles.signOutBtn} onPress={handleLogout}>
+                      <Ionicons name="log-out-outline" size={16} color={Colors.red} />
+                      <Text style={styles.signOutBtnText}>Sign Out</Text>
+                    </TouchableOpacity>
               </View>
             </View>
           )}
         </View>
+
+            {/* Logout confirmation modal */}
+            <Modal
+              visible={showLogoutModal}
+              transparent
+              animationType="fade"
+              onRequestClose={() => setShowLogoutModal(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>Sign Out</Text>
+                  <Text style={styles.modalMsg}>Are you sure you want to sign out?</Text>
+                  <View style={styles.modalActions}>
+                    <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setShowLogoutModal(false)}>
+                      <Text style={styles.modalCancelText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.modalConfirmBtn} onPress={confirmLogout}>
+                      <Text style={styles.modalConfirmText}>Sign Out</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
 
         {/* Addresses */}
         <View style={styles.sectionCard}>
@@ -610,5 +643,66 @@ const styles = StyleSheet.create({
   },
   markReadBtn: {
     padding: 6,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: '#fff',
+    borderRadius: Radius.lg,
+    padding: Spacing.base,
+    borderWidth: 1,
+    borderColor: Colors.gray100,
+    ...Shadow.sm,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: Colors.textPrimary,
+    marginBottom: Spacing.sm,
+    textAlign: 'center',
+  },
+  modalMsg: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: Spacing.base,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: Colors.gray200,
+    borderRadius: Radius.sm,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.gray700,
+  },
+  modalConfirmBtn: {
+    flex: 1,
+    backgroundColor: Colors.red,
+    borderRadius: Radius.sm,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalConfirmText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#fff',
   },
 });

@@ -56,6 +56,8 @@ export default function MenuItemModal({
 
   const [isVeg, setIsVeg] = useState(false);
 
+  const [imageUrl, setImageUrl] = useState("");
+
   const [errors, setErrors] = useState<any>({});
 
   useEffect(() => {
@@ -71,6 +73,8 @@ export default function MenuItemModal({
           ? String(parseFloat(editingItem.price))
           : ""
       );
+
+      setImageUrl(editingItem.imageUrl || "");
 
       setCategoryId(editingItem.categoryId);
 
@@ -101,6 +105,8 @@ export default function MenuItemModal({
 
     setPrice("");
 
+    setImageUrl("");
+
     setCategoryId(undefined);
 
     setStockQuantity("-1");
@@ -124,7 +130,8 @@ export default function MenuItemModal({
     if (Number(price) <= 0)
       obj.price = "Invalid price";
 
-    // category is now optional, no validation check needed
+    if (!imageUrl.trim())
+      obj.imageUrl = "Menu item image is mandatory";
 
     if (Number(preparationTime) <= 0)
       obj.preparationTime =
@@ -148,7 +155,7 @@ export default function MenuItemModal({
 
         price: Number(price),
 
-        
+        imageUrl: imageUrl.trim(),
 
         categoryId,
 
@@ -258,7 +265,7 @@ export default function MenuItemModal({
             />
 
             <Text style={styles.label}>
-              Price
+              Price *
             </Text>
 
             <TextInput
@@ -266,11 +273,30 @@ export default function MenuItemModal({
               keyboardType="numeric"
               onChangeText={setPrice}
               style={styles.input}
+              placeholder="e.g. 299"
             />
 
             {!!errors.price && (
               <Text style={styles.error}>
                 {errors.price}
+              </Text>
+            )}
+
+            <Text style={styles.label}>
+              Image URL * (Cloudinary or Direct Link)
+            </Text>
+
+            <TextInput
+              value={imageUrl}
+              onChangeText={setImageUrl}
+              style={styles.input}
+              placeholder="https://res.cloudinary.com/... or image link"
+              autoCapitalize="none"
+            />
+
+            {!!errors.imageUrl && (
+              <Text style={styles.error}>
+                {errors.imageUrl}
               </Text>
             )}
 
