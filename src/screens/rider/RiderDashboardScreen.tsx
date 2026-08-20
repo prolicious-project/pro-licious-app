@@ -9,6 +9,7 @@ import {
   TextInput,
   Alert,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store/store';
@@ -16,14 +17,13 @@ import { api } from '../../lib/axios';
 import { Colors, Spacing, Radius, Shadow } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import { useNavigation } from '@react-navigation/native';
 import { handleLogoutImmediate } from '../../utils/auth';
 
 export default function RiderDashboardScreen({ navigation }: any) {
   const dispatch = useDispatch();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
-  const [online, setOnline] = useState(false);
+  const [online, setOnline] = useState(true);
   const [activeOrders, setActiveOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [otpMap, setOtpMap] = useState<Record<number, string>>({});
@@ -126,6 +126,25 @@ export default function RiderDashboardScreen({ navigation }: any) {
     handleLogoutImmediate(dispatch, navigation);
   };
 
+  const getStatusBadgeStyle = (status: string, isAcceptedByMe: boolean) => {
+    if (!isAcceptedByMe) {
+      return { bg: '#DCFCE7', text: '#15803D', label: 'AVAILABLE' };
+    }
+    switch (status) {
+      case 'ACCEPTED':
+      case 'READY':
+        return { bg: '#DBEAFE', text: '#1D4ED8', label: 'ACCEPTED' };
+      case 'ARRIVED_VENDOR':
+        return { bg: '#F3E8FF', text: '#7E22CE', label: 'AT VENDOR' };
+      case 'PICKED_UP':
+        return { bg: '#FEF3C7', text: '#B45309', label: 'ON THE WAY' };
+      case 'ARRIVED_CUSTOMER':
+        return { bg: '#FEE2E2', text: '#DC2626', label: 'AT CUSTOMER' };
+      default:
+        return { bg: '#F3F4F6', text: '#374151', label: status };
+    }
+  };
+
   if (loading) {
     return <LoadingSpinner fullScreen />;
   }
@@ -134,59 +153,108 @@ export default function RiderDashboardScreen({ navigation }: any) {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Rider Console</Text>
+        <View style={styles.headerLeft}>
+          <Ionicons name="bicycle" size={24} color="#DC2626" />
+          <Text style={styles.headerTitle}>Rider Console</Text>
+        </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity onPress={toggleOnline} style={[styles.statusIndicator, { backgroundColor: online ? Colors.green : Colors.red }]}>
-            <Text style={styles.statusText}>{online ? 'ONLINE' : 'OFFLINE'}</Text>
+          <TouchableOpacity
+            onPress={toggleOnline}
+            style={[styles.statusTogglePill, { backgroundColor: online ? '#DCFCE7' : '#FEE2E2' }]}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.statusDot, { backgroundColor: online ? '#16A34A' : '#DC2626' }]} />
+            <Text style={[styles.statusToggleText, { color: online ? '#15803D' : '#DC2626' }]}>
+              {online ? 'ONLINE' : 'OFFLINE'}
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleSignOut}>
-            <Ionicons name="log-out-outline" size={22} color={Colors.red} />
+          <TouchableOpacity onPress={handleSignOut} style={styles.logoutBtn}>
+            <Ionicons name="log-out-outline" size={22} color="#DC2626" />
           </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-
-        {/* Assigned Orders List */}
-        <Text style={styles.sectionTitle}>Available & Active Deliveries</Text>
+        {/* Section Title */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Available & Active Deliveries</Text>
+          <Text style={styles.sectionSubtitle}>
+            {activeOrders.length} order{activeOrders.length === 1 ? '' : 's'} available
+          </Text>
+        </View>
 
         {activeOrders.length === 0 ? (
           <View style={styles.emptyBox}>
-            <Text style={styles.emptyText}>No active orders available right now.</Text>
+            <Ionicons name="sparkles-outline" size={48} color={Colors.gray400} />
+            <Text style={styles.emptyTitle}>No Orders Available</Text>
+            <Text style={styles.emptyText}>New delivery orders will appear here automatically.</Text>
           </View>
         ) : (
           activeOrders.map((order) => {
             const showOtpField = order.status === 'ARRIVED_CUSTOMER';
             const isAcceptedByMe = order.assignmentStatus === 'ACCEPTED';
             const isBusy = !!actionLoading[order.id];
+            const badge = getStatusBadgeStyle(order.status, isAcceptedByMe);
             const addressText = order.address
               ? `${order.address.houseNumber || ''} ${order.address.street || ''}, ${order.address.city || ''} (${order.address.pincode || ''})`.trim()
               : `House #${order.addressId || 'N/A'}`;
 
             return (
               <View key={order.id} style={styles.orderCard}>
+                {/* Header Row */}
                 <View style={styles.cardHeader}>
-                  <Text style={styles.orderNum}>Order #{order.orderNumber}</Text>
-                  <Text style={styles.orderStatus}>
-                    {isAcceptedByMe ? order.status : 'AVAILABLE FOR PICKUP'}
-                  </Text>
+                  <View style={styles.orderNumTag}>
+                    <Text style={styles.orderNumText}>Order #{order.orderNumber}</Text>
+                  </View>
+                  <View style={[styles.badgePill, { backgroundColor: badge.bg }]}>
+                    <Text style={[styles.badgeText, { color: badge.text }]}>{badge.label}</Text>
+                  </View>
                 </View>
 
+                {/* Details Section */}
                 <View style={styles.cardBody}>
-                  <Text style={styles.detailText}>Vendor: {order.vendor?.name || 'Local shop'}</Text>
-                  {order.vendor?.businessAddress ? (
-                    <Text style={styles.detailText}>Shop Address: {order.vendor.businessAddress}</Text>
-                  ) : null}
-                  <Text style={styles.detailText}>Delivery To: {addressText}</Text>
-                  <Text style={styles.detailText}>Total Amount: ₹{order.totalAmount}</Text>
+                  <View style={styles.detailRow}>
+                    <Ionicons name="storefront-outline" size={16} color="#DC2626" style={styles.detailIcon} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.detailLabel}>Vendor</Text>
+                      <Text style={styles.detailValBold}>{order.vendor?.name || 'Local Store'}</Text>
+                      {order.vendor?.businessAddress ? (
+                        <Text style={styles.detailSubText}>{order.vendor.businessAddress}</Text>
+                      ) : null}
+                    </View>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Ionicons name="location-outline" size={16} color="#16A34A" style={styles.detailIcon} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.detailLabel}>Delivery Address</Text>
+                      <Text style={styles.detailValBold}>{addressText}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <Ionicons name="cash-outline" size={16} color="#2563EB" style={styles.detailIcon} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.detailLabel}>Order Total</Text>
+                      <Text style={styles.priceTagText}>₹{order.totalAmount}</Text>
+                    </View>
+                  </View>
                 </View>
 
+                {/* Bottom Action Area */}
                 {showOtpField ? (
-                  <View style={styles.otpBlock}>
-                    <Text style={styles.otpLabel}>Enter Customer Delivery OTP (Demo: 123456)</Text>
+                  <View style={styles.otpCard}>
+                    <View style={styles.otpHeaderRow}>
+                      <Ionicons name="key-outline" size={16} color="#DC2626" />
+                      <Text style={styles.otpLabel}>Customer Delivery OTP</Text>
+                      <View style={styles.demoTag}>
+                        <Text style={styles.demoTagText}>Demo: 123456</Text>
+                      </View>
+                    </View>
                     <TextInput
                       style={styles.otpInput}
                       placeholder="123456"
+                      placeholderTextColor="#9CA3AF"
                       value={otpMap[order.id] || ''}
                       onChangeText={(t) => setOrderOtp(order.id, t.replace(/\D/g, '').slice(0, 6))}
                       keyboardType="number-pad"
@@ -194,46 +262,73 @@ export default function RiderDashboardScreen({ navigation }: any) {
                       editable={!isBusy}
                     />
                     <TouchableOpacity
-                      style={[styles.actionBtn, isBusy && styles.disabledBtn]}
+                      style={[styles.primaryActionBtn, isBusy && styles.disabledBtn]}
                       onPress={() => handleDeliver(order.id)}
                       disabled={isBusy}
                     >
-                      <Text style={styles.actionBtnText}>
-                        {isBusy ? 'Processing...' : 'Confirm Delivery'}
-                      </Text>
+                      {isBusy ? (
+                        <ActivityIndicator color="#fff" size="small" />
+                      ) : (
+                        <>
+                          <Ionicons name="checkmark-circle-outline" size={18} color="#fff" />
+                          <Text style={styles.primaryActionText}>Confirm Delivery</Text>
+                        </>
+                      )}
                     </TouchableOpacity>
                   </View>
                 ) : !isAcceptedByMe ? (
-                  <View style={styles.btnRow}>
+                  <View style={styles.acceptRejectRow}>
                     <TouchableOpacity
-                      style={[styles.actionBtn, styles.acceptBtn, isBusy && styles.disabledBtn]}
+                      style={[styles.acceptBtn, isBusy && styles.disabledBtn]}
                       onPress={() => handleAction(order)}
                       disabled={isBusy}
                     >
-                      <Text style={styles.actionBtnText}>
-                        {isBusy ? 'Accepting...' : 'Accept Order'}
-                      </Text>
+                      {isBusy ? (
+                        <ActivityIndicator color="#fff" size="small" />
+                      ) : (
+                        <>
+                          <Ionicons name="checkmark-circle-outline" size={18} color="#fff" />
+                          <Text style={styles.acceptBtnText}>Accept Order</Text>
+                        </>
+                      )}
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.actionBtn, styles.rejectBtn, isBusy && styles.disabledBtn]}
+                      style={[styles.rejectBtn, isBusy && styles.disabledBtn]}
                       onPress={() => handleReject(order.id)}
                       disabled={isBusy}
                     >
+                      <Ionicons name="close-circle-outline" size={18} color="#DC2626" />
                       <Text style={styles.rejectBtnText}>Reject</Text>
                     </TouchableOpacity>
                   </View>
                 ) : (
                   <TouchableOpacity
-                    style={[styles.actionBtn, isBusy && styles.disabledBtn]}
+                    style={[styles.primaryActionBtn, isBusy && styles.disabledBtn]}
                     onPress={() => handleAction(order)}
                     disabled={isBusy}
                   >
-                    <Text style={styles.actionBtnText}>
-                      {isBusy && 'Updating...'}
-                      {!isBusy && (order.status === 'ACCEPTED' || order.status === 'READY') && 'Arrived at Shop'}
-                      {!isBusy && order.status === 'ARRIVED_VENDOR' && 'Picked Up Order'}
-                      {!isBusy && order.status === 'PICKED_UP' && 'Arrived at Customer Address'}
-                    </Text>
+                    {isBusy ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <>
+                        <Ionicons
+                          name={
+                            order.status === 'ACCEPTED' || order.status === 'READY'
+                              ? 'storefront-outline'
+                              : order.status === 'ARRIVED_VENDOR'
+                              ? 'bag-handle-outline'
+                              : 'navigate-outline'
+                          }
+                          size={18}
+                          color="#fff"
+                        />
+                        <Text style={styles.primaryActionText}>
+                          {(order.status === 'ACCEPTED' || order.status === 'READY') && 'Arrived at Shop'}
+                          {order.status === 'ARRIVED_VENDOR' && 'Picked Up Order'}
+                          {order.status === 'PICKED_UP' && 'Arrived at Customer Address'}
+                        </Text>
+                      </>
+                    )}
                   </TouchableOpacity>
                 )}
               </View>
@@ -248,164 +343,259 @@ export default function RiderDashboardScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.bg,
+    backgroundColor: '#F9FAFB',
   },
   header: {
-    height: 56,
-    backgroundColor: '#fff',
+    height: 60,
+    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
-    borderBottomColor: Colors.gray100,
+    borderBottomColor: '#E5E7EB',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.base,
+    paddingHorizontal: 16,
+    ...Shadow.sm,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: Colors.textPrimary,
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#111827',
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    gap: 12,
   },
-  statusIndicator: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radius.sm,
+  statusTogglePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    gap: 6,
   },
-  statusText: {
-    color: '#fff',
-    fontSize: 9,
-    fontWeight: '900',
+  statusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  statusToggleText: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  logoutBtn: {
+    padding: 4,
   },
   scrollContent: {
-    padding: Spacing.base,
-    gap: Spacing.base,
-    paddingBottom: Spacing['3xl'],
+    padding: 16,
+    paddingBottom: 40,
   },
-  tabRow: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: Colors.gray100,
-    ...Shadow.sm,
-  },
-  tabBtn: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  tabBtnText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    marginTop: 4,
+  sectionHeader: {
+    marginBottom: 14,
   },
   sectionTitle: {
-    fontSize: 15,
-    fontWeight: '900',
-    color: Colors.textPrimary,
-    marginTop: Spacing.sm,
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  sectionSubtitle: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
   },
   emptyBox: {
-    backgroundColor: '#fff',
-    padding: Spacing.xl,
-    borderRadius: Radius.lg,
+    backgroundColor: '#ffffff',
+    padding: 36,
+    borderRadius: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.gray100,
+    borderColor: '#E5E7EB',
+    marginTop: 20,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#374151',
+    marginTop: 12,
   },
   emptyText: {
-    color: Colors.gray500,
-    fontSize: 12,
+    color: '#9CA3AF',
+    fontSize: 13,
+    marginTop: 4,
+    textAlign: 'center',
   },
   orderCard: {
-    backgroundColor: '#fff',
-    borderRadius: Radius.lg,
-    padding: Spacing.base,
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: Colors.gray100,
+    borderColor: '#E5E7EB',
     ...Shadow.sm,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.gray100,
-    paddingBottom: Spacing.sm,
-    marginBottom: Spacing.sm,
+    borderBottomColor: '#F3F4F6',
+    marginBottom: 12,
   },
-  orderNum: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: Colors.textPrimary,
+  orderNumTag: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
-  orderStatus: {
-    fontSize: 11,
+  orderNumText: {
+    fontSize: 13,
     fontWeight: '800',
-    color: Colors.red,
+    color: '#1F2937',
+  },
+  badgePill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
   cardBody: {
-    gap: 4,
-    marginBottom: Spacing.md,
+    gap: 12,
+    marginBottom: 14,
   },
-  detailText: {
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  detailIcon: {
+    marginTop: 2,
+  },
+  detailLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#9CA3AF',
+    textTransform: 'uppercase',
+  },
+  detailValBold: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginTop: 1,
+  },
+  detailSubText: {
     fontSize: 12,
-    color: Colors.gray700,
+    color: '#6B7280',
+    marginTop: 2,
   },
-  actionBtn: {
-    backgroundColor: Colors.red,
-    height: 38,
-    borderRadius: Radius.sm,
-    justifyContent: 'center',
+  priceTagText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#DC2626',
+    marginTop: 1,
+  },
+  otpCard: {
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 12,
+    padding: 14,
+    gap: 10,
+  },
+  otpHeaderRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+  },
+  otpLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#991B1B',
     flex: 1,
   },
-  btnRow: {
+  demoTag: {
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  demoTagText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#DC2626',
+  },
+  otpInput: {
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    borderRadius: 8,
+    height: 44,
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#111827',
+    letterSpacing: 6,
+  },
+  primaryActionBtn: {
+    backgroundColor: '#DC2626',
+    height: 44,
+    borderRadius: 8,
     flexDirection: 'row',
-    gap: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  primaryActionText: {
+    color: '#ffffff',
+    fontWeight: '800',
+    fontSize: 14,
+  },
+  acceptRejectRow: {
+    flexDirection: 'row',
+    gap: 10,
   },
   acceptBtn: {
-    backgroundColor: Colors.green,
+    flex: 1,
+    backgroundColor: '#16A34A',
+    height: 44,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  acceptBtnText: {
+    color: '#ffffff',
+    fontWeight: '800',
+    fontSize: 14,
   },
   rejectBtn: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: Colors.red,
+    flex: 1,
+    backgroundColor: '#ffffff',
+    borderWidth: 1.5,
+    borderColor: '#DC2626',
+    height: 44,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
   rejectBtnText: {
-    color: Colors.red,
+    color: '#DC2626',
     fontWeight: '800',
-    fontSize: 12,
+    fontSize: 14,
   },
   disabledBtn: {
     opacity: 0.6,
-  },
-  actionBtnText: {
-    color: '#fff',
-    fontWeight: '800',
-    fontSize: 12,
-  },
-  otpBlock: {
-    gap: Spacing.sm,
-  },
-  otpLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: Colors.gray500,
-    textTransform: 'uppercase',
-  },
-  otpInput: {
-    borderWidth: 1,
-    borderColor: Colors.gray200,
-    borderRadius: Radius.sm,
-    height: 40,
-    textAlign: 'center',
-    fontSize: 16,
-    letterSpacing: 4,
   },
 });
