@@ -256,7 +256,7 @@ export default function VendorMenuScreen() {
 
                   <View style={styles.itemAction}>
                     <Image
-                      source={{ uri: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?q=80&w=200&auto=format&fit=crop' }}
+                      source={{ uri: item.imageUrl || 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?q=80&w=200&auto=format&fit=crop' }}
                       style={styles.itemImg as any}
                     />
                     <View style={styles.qtyContainer}>

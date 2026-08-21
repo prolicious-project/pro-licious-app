@@ -26,7 +26,6 @@ export default function CartScreen() {
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const vendorId = useSelector((state: RootState) => state.cart.vendorId);
   const [loading, setLoading] = useState(true);
-
   const fetchCart = async () => {
     try {
       const res = await api.get('/api/customer/cart');
@@ -40,8 +39,8 @@ export default function CartScreen() {
           price: item.price,
           quantity: item.quantity,
           vendorId: cart.vendorId,
-        }));
-        dispatch(setCart({ items, vendorId: cart.vendorId }));
+       }));
+         dispatch(setCart({ items, vendorId: cart.vendorId }));
       } else {
         dispatch(setCart({ items: [], vendorId: null }));
       }
